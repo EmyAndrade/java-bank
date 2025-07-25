@@ -2,6 +2,7 @@ package br.com.dio;
 
 import br.com.dio.exception.AccountNotFoundException;
 import br.com.dio.exception.NoFundsEnoughException;
+import br.com.dio.exception.PixInUseException;
 import br.com.dio.model.AccountWallet;
 import br.com.dio.repository.AccountRepository;
 
@@ -106,40 +107,92 @@ public class Main {
     private static void withdraw() {
         System.out.println("Informe a chave pix para saque:");
         var pix = scanner.next();
+
         System.out.println("Informe o valor do saque:");
-        var amount = scanner.nextLong();
+        long amount;
+
         try {
+            amount = scanner.nextLong();
+
+            if (amount <= 0) {
+                System.out.println("Valor inválido para saque. Deve ser maior que zero.");
+                return;
+            }
+
             accountRepository.withdraw(pix, amount);
+            System.out.println("Saque realizado com sucesso!");
+
         } catch (NoFundsEnoughException | AccountNotFoundException ex) {
-            System.out.println(ex.getMessage());
+            System.out.println("Erro: " + ex.getMessage());
+        } catch (Exception e) {
+            System.out.println("Erro inesperado: " + e.getMessage());
+            e.printStackTrace(); // útil para depuração
+        } finally {
+            scanner.nextLine(); // limpa o buffer
         }
     }
+
 
     private static void deposit() {
         System.out.println("Informe a chave pix para depósito:");
         var pix = scanner.next();
+
         System.out.println("Informe o valor do depósito:");
-        var amount = scanner.nextLong();
+        long amount;
+
         try {
+            amount = scanner.nextLong();
+
+            if (amount <= 0) {
+                System.out.println("Valor inválido para depósito. Deve ser maior que zero.");
+                return;
+            }
+
             accountRepository.deposit(pix, amount);
+            System.out.println("Depósito realizado com sucesso!");
+
         } catch (AccountNotFoundException ex) {
-            System.out.println(ex.getMessage());
+            System.out.println("Erro: " + ex.getMessage());
+        } catch (Exception e) {
+            System.out.println("Erro inesperado: " + e.getMessage());
+            e.printStackTrace(); // útil para depuração
+        } finally {
+            scanner.nextLine(); // limpa o buffer após ler long
         }
     }
+
 
     private static void transferToAccount() {
         System.out.println("Informe a chave pix da conta de origem:");
         var source = scanner.next();
+
         System.out.println("Informe a chave pix da conta para envio:");
         var target = scanner.next();
-        System.out.println("Informe o valor do depósito:");
-        var amount = scanner.nextLong();
+
+        System.out.println("Informe o valor da transferencia:");
+        long amount;
+
         try {
+            amount = scanner.nextLong();
+
+            if (amount <= 0) {
+                System.out.println("Valor invalido para transferencia.");
+                return;
+            }
+
             accountRepository.transferMoney(source, target, amount);
-        } catch (AccountNotFoundException ex) {
-            System.out.println(ex.getMessage());
+            System.out.println("Transferencia realizada com sucesso!");
+
+        } catch (AccountNotFoundException | PixInUseException ex) {
+            System.out.println("Erro: " + ex.getMessage());
+        } catch (Exception e) {
+            System.out.println("Erro inesperado: " + e.getMessage());
+            e.printStackTrace(); // Ajuda a debugar
+        } finally {
+            scanner.nextLine(); // limpa o buffer do scanner
         }
     }
+
 
     private static void createWalletInvestment() {
         System.out.println("Informe a chave pix da conta:");
@@ -154,39 +207,89 @@ public class Main {
     private static void incInvestment() {
         System.out.println("Informe a chave pix da conta para investimento:");
         var pix = scanner.next();
+
         System.out.println("Informe o valor do investimento:");
-        var amount = scanner.nextLong();
+        long amount;
+
         try {
+            amount = scanner.nextLong();
+
+            if (amount <= 0) {
+                System.out.println("Valor invalido para investimento. Deve ser maior que zero.");
+                return;
+            }
+
             investmentRepository.deposit(pix, amount);
             System.out.println("Investimento realizado com sucesso!");
+
         } catch (AccountNotFoundException ex) {
-            System.out.println(ex.getMessage());
+            System.out.println("Erro: " + ex.getMessage());
+        } catch (Exception e) {
+            System.out.println("Erro inesperado: " + e.getMessage());
+            e.printStackTrace(); // útil para depuração
+        } finally {
+            scanner.nextLine(); // limpa o buffer após nextLong
         }
     }
+
 
     private static void rescueInvestment() {
         System.out.println("Informe a chave pix para resgate do investimento:");
         var pix = scanner.next();
+
         System.out.println("Informe o valor do saque:");
-        var amount = scanner.nextLong();
+        long amount;
+
         try {
+            amount = scanner.nextLong();
+
+            if (amount <= 0) {
+                System.out.println("Valor invalido. Deve ser maior que zero.");
+                return;
+            }
+
             investmentRepository.withdraw(pix, amount);
+            System.out.println("Resgate realizado com sucesso!");
+
         } catch (NoFundsEnoughException | AccountNotFoundException ex) {
-            System.out.println(ex.getMessage());
+            System.out.println("Erro: " + ex.getMessage());
+        } catch (Exception e) {
+            System.out.println("Erro inesperado: " + e.getMessage());
+            e.printStackTrace(); // opcional para debug
+        } finally {
+            scanner.nextLine(); // limpa buffer
         }
     }
 
     private static void checkHistory() {
         System.out.println("Informe a chave pix da conta para verificar extrato:");
         var pix = scanner.next();
-        AccountWallet wallet;
+
         try {
-            wallet = accountRepository.findByPix(pix);
-            var audit = wallet .getFinancialTransactions();
-            var group = audit.stream()
+            AccountWallet wallet = accountRepository.findByPix(pix);
+            var audit = wallet.getFinancialTransactions();
+
+            if (audit.isEmpty()) {
+                System.out.println("Nenhuma transaçao registrada.");
+                return;
+            }
+
+            var grouped = audit.stream()
                     .collect(Collectors.groupingBy(t -> t.createdAt().truncatedTo(SECONDS)));
+
+            grouped.forEach((timestamp, transactions) -> {
+                System.out.println("\nData/Hora: " + timestamp);
+                for (var t : transactions) {
+                    System.out.println("- " + t.description());
+                }
+            });
+
         } catch (AccountNotFoundException ex) {
-            System.out.println(ex.getMessage());
+            System.out.println("Erro: " + ex.getMessage());
+        } catch (Exception e) {
+            System.out.println("Erro inesperado: " + e.getMessage());
+            e.printStackTrace();
         }
     }
+
 }

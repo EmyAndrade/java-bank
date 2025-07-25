@@ -63,7 +63,7 @@ public class InvestmentRepository {
         return investments.stream()
                 .filter(a -> a.id() == id)
                 .findFirst()
-                .orElseThrow(() -> new InvestmentNotFoundException("Investimento não encontrado '"+ id + "' não foi encontrado"));
+                .orElseThrow(() -> new InvestmentNotFoundException("Investimento '"+ id + "' não foi encontrado"));
     }
 
     public InvestmentWallet findWalletByAccountPix(final String pix) {
@@ -71,7 +71,7 @@ public class InvestmentRepository {
                 .filter(w -> w.getAccount().getPix().contains(pix))
                 .findFirst()
                 .orElseThrow(
-                        () -> new WalletNotFoundException("A carteira não foi encontrada "));
+                        () -> new WalletNotFoundException("A carteira nao foi encontrada "));
 
     }
 

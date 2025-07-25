@@ -17,7 +17,7 @@ public class AccountRepository {
         var pixInUse = accounts.stream().flatMap(a -> a.getPix().stream()).toList();
         for (var p : pix) {
             if (pixInUse.contains(p)) {
-                throw new PixInUseException("Pix já está em uso: " + p);
+                throw new PixInUseException("Pix ja esta em uso: " + p);
 
             }
         }
@@ -28,7 +28,7 @@ public class AccountRepository {
 
     public void deposit(final String pix, final long fundsAmount) {
         var target = findByPix(pix);
-        target.addMoney(fundsAmount, "Depósito");
+        target.addMoney(fundsAmount, "Deposito");
     }
 
     public long withdraw(final String pix, final long amount) {
@@ -53,7 +53,7 @@ public class AccountRepository {
                     .toList();
 
             if (!allPix.contains(pix)) {
-                throw new PixInUseException("Pix **não** está em uso: " + pix); // ajuste na mensagem
+                throw new PixInUseException("Pix nao esta em uso: " + pix); // ajuste na mensagem
             }
         }
 
